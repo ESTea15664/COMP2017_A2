@@ -11,7 +11,7 @@ int main(void) {
     int index_of_lists = 0;
     int num_of_lists = 0;
 
-    // stroing all lists in here
+    // stroing all heads in here
     struct list * lists = (struct list *)malloc(100 * sizeof(node));
 
     // allocate memory to store nodes
@@ -61,7 +61,7 @@ int main(void) {
             // checking different first command inputs
                 // NEW
             if (strcmp(cmds[0], "NEW") == 0){
-               lists[index_of_lists].head = mtll_create(*deux_cmd, index_of_lists, ns, is, fs, cs, ss, num_ns, num_is, num_fs, num_cs, num_ss);
+                lists[index_of_lists].head = mtll_create(*deux_cmd, index_of_lists, ns, is, fs, cs, ss, lists, num_ns, num_is, num_fs, num_cs, num_ss);
                 if (lists[index_of_lists].head->data_type != 'n'){
                     num_of_lists++;
                     index_of_lists++;
@@ -71,8 +71,8 @@ int main(void) {
                 // VIEW
             else if (strcmp(cmds[0], "VIEW") == 0){
                 if (numeric){
-                    if (lists[*deux_cmd - 1].head != NULL){
-                        mtll_view(lists[*deux_cmd - 1].head);
+                    if (lists[*deux_cmd - 0].head != NULL){
+                        mtll_view(lists[*deux_cmd - 0].head);
                     }
                     else{
                         printf("INVALID COMMAND: VIEW\n");
@@ -82,8 +82,24 @@ int main(void) {
                     printf("Number of all list: %d\n", num_of_lists);
                     for(int i = 0; i < index_of_lists; i++){
                         if (lists[i].head != NULL){
-                            printf("List %d\n", lists[i].head->index + 1);
+                            printf("List %d\n", lists[i].head->index);
                         }
+                    }
+                }
+                else{
+                    printf("INVALID COMMAND: INPUT\n");
+                    continue;
+                }
+            }
+
+                // VIEW_NESTED
+            else if (strcmp(cmds[0], "VIEW_NESTED") == 0){
+                if (numeric){
+                    if (lists[*deux_cmd - 0].head != NULL){
+                        mtll_view_nested(lists[*deux_cmd - 0].head);
+                    }
+                    else{
+                        printf("INVALID COMMAND: VIEW\n");
                     }
                 }
                 else{
@@ -94,12 +110,12 @@ int main(void) {
 
                 // TYPE
             else if (strcmp(cmds[0], "TYPE") == 0){
-                mtll_type(lists[(*deux_cmd - 1)  * sizeof(node)].head);
+                mtll_type(lists[*deux_cmd - 0].head);
             }
 
                 // REMOVE (set head as "NULL")
             else if (strcmp(cmds[0], "REMOVE") == 0){
-                lists[*deux_cmd - 1].head = NULL;
+                lists[*deux_cmd - 0].head = NULL;
                 num_of_lists--;
             }
 
@@ -116,10 +132,10 @@ int main(void) {
 
                 sscanf(buffer, "%s %d %d %s", cmds[0], t_ptr, p_ptr, e_ptr);
 
-                node * insertion = mtll_insert(lists[target - 1].head, position, element, ns, is, fs, cs, ss, num_ns, num_is, num_fs, num_cs, num_ss);
+                node * insertion = mtll_insert(lists[target].head, position, element, ns, is, fs, cs, ss, lists, num_ns, num_is, num_fs, num_cs, num_ss);
 
                 if (insertion != NULL){
-                    lists[*deux_cmd - 1].head = insertion;
+                    lists[*deux_cmd - 0].head = insertion;
                 }
             }
 
@@ -136,7 +152,7 @@ int main(void) {
                 node * deletion = mtll_delete(lists[target - 1].head, position, lists[target - 1].head->index, ns, num_ns);
 
                 if (deletion != NULL){
-                    lists[*deux_cmd - 1].head = deletion;
+                    (lists[*deux_cmd - 0]).head = deletion;
                 }
             }
 

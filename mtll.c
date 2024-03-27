@@ -5,12 +5,12 @@
 #include<math.h>
 
 void mtll_free(int * is, float * fs, char * cs, char * ss, node * ns, struct list * lists){
+    free(lists);
+    free(ns);
     free(is);
     free(fs);
     free(cs);
     free(ss);
-    free(ns);
-    free(lists);
 
     is = NULL;
     fs = NULL;
@@ -20,7 +20,7 @@ void mtll_free(int * is, float * fs, char * cs, char * ss, node * ns, struct lis
     lists = NULL;
 }
 
-node * mtll_create(int size, int index, node * ns, int * is, float * fs, char * cs, char * ss, int * num_ns, int * num_is, int * num_fs, int * num_cs, int * num_ss) {
+node * mtll_create(int size, int index, node * ns, int * is, float * fs, char * cs, char * ss, struct list * lists, int * num_ns, int * num_is, int * num_fs, int * num_cs, int * num_ss) {
     node * mtlls = &ns[(*num_ns + 1) * sizeof(node)];
 
     // check size value
@@ -46,7 +46,49 @@ node * mtll_create(int size, int index, node * ns, int * is, float * fs, char * 
             char str[100];
             strcpy(str, buffer);
 
+            // remove new line character
+            str[strlen(str) - 1] = '\0';
+
             sscanf(buffer, "%s", i_ptr);
+
+            // nest list
+            if (str[0] == '{' && str[strlen(str) - 1] == '}'){
+                int list_num;
+                char spare[100];
+                strcpy(spare, str);
+
+                sscanf(spare, "{%d}", &list_num);
+
+                if (list_num > *num_ns || lists[list_num].head == NULL){
+                    i--;
+                    printf("INVALID COMMAND: NEW\n");
+                    continue;
+                }
+                
+                node * head = NULL;
+                node * tail = NULL;
+
+                // find head and tail
+                if (lists[list_num].head != NULL){
+                    head = lists[list_num].head;
+
+                    node * cursor = head;
+                    while(1){
+                        if (cursor->next == NULL){
+                            tail = cursor;
+                            break;
+                        }
+                        else {
+                            cursor = cursor->next;
+                        }
+                    }
+                }
+
+                mtlls[i-1].next = head;
+                tail->next = &mtlls[i + 1];
+
+                continue;
+            }
 
             mtlls[i].index = index;
             mtlls[i].data_type = 'c';
@@ -79,8 +121,6 @@ node * mtll_create(int size, int index, node * ns, int * is, float * fs, char * 
                     // string
                     else if (strlen(str) > 1) {
                         mtlls[i].data_type = 's';
-
-                        str[strlen(str) - 1] = '\0';
                         
                         strcpy(&ss[(*num_ss) * 100], str);
 
@@ -126,7 +166,7 @@ node * mtll_create(int size, int index, node * ns, int * is, float * fs, char * 
     }
 
     // display list content
-    printf("list %d: ", index+1);
+    printf("list %d: ", index);
     mtll_view(&mtlls[0]);
     
     return &mtlls[0];
@@ -135,8 +175,62 @@ node * mtll_create(int size, int index, node * ns, int * is, float * fs, char * 
 void mtll_view(node * head){
     node cursor = *head;
 
+    int list_num = cursor.index;
+    int nest = 0;
+
     while (1){
         if (cursor.next != NULL){
+            // print nest
+            if (cursor.index != list_num){
+                if (nest == 0){
+                    printf("{list %d}", cursor.index);
+                    list_num = cursor.index;
+                    nest = 1;
+                }
+                else{
+                    list_num = cursor.index;
+                    nest = 0;
+                }
+            }
+
+            else if (cursor.data_type == 'i' && nest == 0){
+                int * i = cursor.data;
+                printf("%d", *i);
+            }
+            else if (cursor.data_type == 'f' && nest == 0){
+                float * f = cursor.data;
+                printf("%.02f", *f);
+            }
+            else if (cursor.data_type == 'c' && nest == 0){
+                char * c = cursor.data;
+                printf("%c", *c);
+            }
+            else if (cursor.data_type == 's' && nest == 0){
+                char * s = cursor.data;
+                printf("%s", s);
+            }
+
+            printf(" -> ");
+            cursor = *cursor.next;
+        }
+        else{
+            // print nest
+            if (cursor.index != list_num){
+                if (nest == 0){
+                    printf("{list %d}", cursor.index);
+                    list_num = cursor.index;
+                    nest = 1;
+                }
+                else{
+                    list_num = cursor.index;
+                    nest = 0;
+                }
+            }
+
+            if (nest == 1){
+                printf(" -> ");
+            }
+
             if (cursor.data_type == 'i'){
                 int * i = cursor.data;
                 printf("%d", *i);
@@ -153,10 +247,130 @@ void mtll_view(node * head){
                 char * s = cursor.data;
                 printf("%s", s);
             }
-            printf(" -> ");
+            printf("\n");
+            break;
+        }
+    }
+}
+
+void mtll_view_nested(node * head){
+    node cursor = *head;
+
+    int list_num = cursor.index;
+    int nest = 0;
+
+    while (1){
+        if (cursor.next != NULL){
+            // print nest
+            if (cursor.index != list_num){
+                if (nest == 0){
+                    printf("{");
+
+                    while(1){
+                        if (cursor.data_type == 'i'){
+                            int * i = cursor.data;
+                            printf("%d", *i);
+                        }
+                        else if (cursor.data_type == 'f'){
+                            float * f = cursor.data;
+                            printf("%.02f", *f);
+                        }
+                        else if (cursor.data_type == 'c'){
+                            char * c = cursor.data;
+                            printf("%c", *c);
+                        }
+                        else if (cursor.data_type == 's'){
+                            char * s = cursor.data;
+                            printf("%s", s);
+                        }
+
+                        if (cursor.next->index != cursor.index){
+                            break;
+                        }
+                        cursor = *cursor.next;
+
+                        printf(" -> ");
+                    }
+
+                    printf("}");
+
+                    list_num = cursor.index;
+                    nest = 1;
+                }
+                else{
+                    list_num = cursor.index;
+                    nest = 0;
+                }
+            }
+
+            else if (cursor.data_type == 'i' && nest == 0){
+                int * i = cursor.data;
+                printf("%d", *i);
+            }
+            else if (cursor.data_type == 'f' && nest == 0){
+                float * f = cursor.data;
+                printf("%.02f", *f);
+            }
+            else if (cursor.data_type == 'c' && nest == 0){
+                char * c = cursor.data;
+                printf("%c", *c);
+            }
+            else if (cursor.data_type == 's' && nest == 0){
+                char * s = cursor.data;
+                printf("%s", s);
+            }
+
+            if (nest == 0){
+                printf(" -> ");
+            }
             cursor = *cursor.next;
         }
         else{
+            // print nest
+            if (cursor.index != list_num){
+                if (nest == 0){
+                    printf("{");
+
+                    while(1){
+                        if (cursor.data_type == 'i'){
+                            int * i = cursor.data;
+                            printf("%d", *i);
+                        }
+                        else if (cursor.data_type == 'f'){
+                            float * f = cursor.data;
+                            printf("%.02f", *f);
+                        }
+                        else if (cursor.data_type == 'c'){
+                            char * c = cursor.data;
+                            printf("%c", *c);
+                        }
+                        else if (cursor.data_type == 's'){
+                            char * s = cursor.data;
+                            printf("%s", s);
+                        }
+
+                        if (cursor.next->index != cursor.index){
+                            break;
+                        }
+
+                        printf(" -> ");
+                    }
+
+                    printf("}");
+
+                    list_num = cursor.index;
+                    nest = 1;
+                }
+                else{
+                    list_num = cursor.index;
+                    nest = 0;
+                }
+            }
+            
+            if (nest == 0){
+                printf(" -> ");
+            }
+
             if (cursor.data_type == 'i'){
                 int * i = cursor.data;
                 printf("%d", *i);
@@ -182,41 +396,79 @@ void mtll_view(node * head){
 void mtll_type(node * head){
     node cursor = *head;
 
+    int list_num = cursor.index;
+    int nest = 0;
+
     while (1){
         if (cursor.next != NULL){
-            if (cursor.data_type == 105){
-                printf("integer-> ");
+            // print nest
+            if (cursor.index != list_num){
+                if (nest == 0){
+                    printf("reference");
+                    list_num = cursor.index;
+                    nest = 1;
+                }
+                else{
+                    list_num = cursor.index;
+                    nest = 0;
+                }
             }
-            else if (cursor.data_type == 102){
-                printf("float -> ");
+
+            else if (cursor.data_type == 'i' && nest == 0){
+                printf("integer");
             }
-            else if (cursor.data_type == 99){
-                printf("char -> ");
+            else if (cursor.data_type == 'f' && nest == 0){
+                printf("float");
             }
-            else if (cursor.data_type == 115){
-                printf("string -> ");
+            else if (cursor.data_type == 'c' && nest == 0){
+                printf("char");
+            }
+            else if (cursor.data_type == 's' && nest == 0){
+                printf("string");
+            }
+
+            if (nest == 0){
+                printf(" -> ");
             }
             cursor = *cursor.next;
         }
         else{
-            if (cursor.data_type == 105){
-                printf("string\n");
+            if (nest == 1){
+                printf(" -> ");
             }
-            else if (cursor.data_type == 102){
-                printf("float\n");
+
+            // print nest
+            if (cursor.index != list_num){
+                if (nest == 0){
+                    printf("reference");
+                    list_num = cursor.index;
+                    nest = 1;
+                }
+                else{
+                    list_num = cursor.index;
+                    nest = 0;
+                }
             }
-            else if (cursor.data_type == 99){
-                printf("char\n");
+
+            if (cursor.data_type == 'i'){
+                printf("integer");
             }
-            else if (cursor.data_type == 115){
-                printf("string\n");
+            else if (cursor.data_type == 'f'){
+                printf("float");
             }
+            else if (cursor.data_type == 'c'){
+                printf("char");
+            }
+            else if (cursor.data_type == 's'){
+                printf("string");
+            }
+            printf("\n");
             break;
         }
     }
 }
 
-node * mtll_insert(node * head, int position, char element[], node * ns, int * is, float * fs, char * cs, char * ss, int * num_ns, int * num_is, int * num_fs, int * num_cs, int * num_ss){
+node * mtll_insert(node * head, int position, char element[], node * ns, int * is, float * fs, char * cs, char * ss, struct list * lists, int * num_ns, int * num_is, int * num_fs, int * num_cs, int * num_ss){
     node * bottom = head;
 
     // measuring list size
@@ -243,7 +495,62 @@ node * mtll_insert(node * head, int position, char element[], node * ns, int * i
         bottom = bottom->next;
     }
 
-    // find spot for i_node
+    // nest list
+    if (element[0] == '{' && element[strlen(element) - 1] == '}'){
+        int list_num;
+        char spare[100];
+        strcpy(spare, element);
+
+        sscanf(spare, "{%d}", &list_num);
+
+        if (list_num > *num_ns || lists[list_num].head == NULL){
+            printf("INVALID COMMAND: NEW\n");
+        }
+                
+        node * i_head = NULL;
+        node * i_tail = NULL;
+
+        // find head and tail
+        if (lists[list_num].head != NULL){
+            i_head = lists[list_num].head;
+
+            node * cursor = i_head;
+            while(1){
+                if (cursor->next == NULL){
+                    i_tail = cursor;
+                    break;
+                }
+                else {
+                    cursor = cursor->next;
+                }
+            }
+        }
+
+        if (position == 0){
+            printf("INVALID COMMAND: INSERT\n");
+            return head;
+        }
+        else if (position != size || (position == size && rev == 0)){
+            node * top = head;
+            for (int i = 1; i < position; i++){
+                top = top->next;
+            }
+            top->next = i_head;
+            i_tail->next = bottom;
+            bottom = i_head;
+        }
+        else if (position == size && rev == 1){
+            bottom->next = i_head;
+        }
+
+        // display list content
+        printf("list %d: ", head->index);
+        mtll_view(head);
+
+        return head;
+    }
+
+    // node insertion
     node * i_node = &ns[(*num_ns + 1) * sizeof(node)];
 
     char input;
@@ -316,8 +623,9 @@ node * mtll_insert(node * head, int position, char element[], node * ns, int * i
     // insert new element to list
     *num_ns = *num_ns + 1;
 
+    // insertion for empty lists
     if (bottom->data_type == 'e'){
-        printf("list %d: ", head->index + 1);
+        printf("list %d: ", head->index);
         mtll_view(i_node);
         return i_node;
     }
@@ -340,7 +648,7 @@ node * mtll_insert(node * head, int position, char element[], node * ns, int * i
     }
 
     // display list content
-    printf("list %d: ", head->index + 1);
+    printf("list %d: ", head->index);
     mtll_view(head);
 
     return head;
