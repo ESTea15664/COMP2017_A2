@@ -4,6 +4,22 @@
 #include<string.h>
 #include<math.h>
 
+void mtll_free(int * is, float * fs, char * cs, char * ss, node * ns, struct list * lists){
+    free(is);
+    free(fs);
+    free(cs);
+    free(ss);
+    free(ns);
+    free(lists);
+
+    is = NULL;
+    fs = NULL;
+    cs = NULL;
+    ss = NULL;
+    ns = NULL;
+    lists = NULL;
+}
+
 node * mtll_create(int size, int index, node * ns, int * is, float * fs, char * cs, char * ss, int * num_ns, int * num_is, int * num_fs, int * num_cs, int * num_ss) {
     node * mtlls = &ns[(*num_ns + 1) * sizeof(node)];
 
@@ -27,6 +43,8 @@ node * mtll_create(int size, int index, node * ns, int * is, float * fs, char * 
 
     for (int i = 0; i < size; i++){
         if (fgets(buffer, sizeof(buffer), stdin) != NULL){
+            char str[100];
+            strcpy(str, buffer);
 
             sscanf(buffer, "%s", i_ptr);
 
@@ -59,16 +77,13 @@ node * mtll_create(int size, int index, node * ns, int * is, float * fs, char * 
                         *num_fs = *num_fs + 1;
                     }
                     // string
-                    else if (strlen(i_ptr) > 1) {
+                    else if (strlen(str) > 1) {
                         mtlls[i].data_type = 's';
 
-                        for (int k = 0; k <= strlen(i_ptr); k++){
-                            if (k == strlen(i_ptr)){
-                                ss[(*num_ss) * 100 + k] = '\0';
-                                break;
-                            }
-                            ss[(*num_ss) * 100 + k] = i_ptr[k];
-                        }
+                        str[strlen(str) - 1] = '\0';
+                        
+                        strcpy(&ss[(*num_ss) * 100], str);
+
                         mtlls[i].data = &ss[(*num_ss) * 100];
                         *num_ss = *num_ss + 1;
                     }
@@ -122,19 +137,19 @@ void mtll_view(node * head){
 
     while (1){
         if (cursor.next != NULL){
-            if (cursor.data_type == 105){
+            if (cursor.data_type == 'i'){
                 int * i = cursor.data;
                 printf("%d", *i);
             }
-            else if (cursor.data_type == 102){
+            else if (cursor.data_type == 'f'){
                 float * f = cursor.data;
                 printf("%.02f", *f);
             }
-            else if (cursor.data_type == 99){
+            else if (cursor.data_type == 'c'){
                 char * c = cursor.data;
                 printf("%c", *c);
             }
-            else if (cursor.data_type == 115){
+            else if (cursor.data_type == 's'){
                 char * s = cursor.data;
                 printf("%s", s);
             }
@@ -142,19 +157,19 @@ void mtll_view(node * head){
             cursor = *cursor.next;
         }
         else{
-            if (cursor.data_type == 105){
+            if (cursor.data_type == 'i'){
                 int * i = cursor.data;
                 printf("%d", *i);
             }
-            else if (cursor.data_type == 102){
+            else if (cursor.data_type == 'f'){
                 float * f = cursor.data;
                 printf("%.02f", *f);
             }
-            else if (cursor.data_type == 99){
+            else if (cursor.data_type == 'c'){
                 char * c = cursor.data;
                 printf("%c", *c);
             }
-            else if (cursor.data_type == 115){
+            else if (cursor.data_type == 's'){
                 char * s = cursor.data;
                 printf("%s", s);
             }
@@ -265,16 +280,11 @@ node * mtll_insert(node * head, int position, char element[], node * ns, int * i
             }
 
             // string
-            else if (strlen(i_ptr) > 1) {
+            else if (strlen(element) > 1) {
                 i_node->data_type = 's';
 
-                for (int k = 0; k <= strlen(i_ptr); k++){
-                    if (k == strlen(i_ptr)){
-                        ss[(*num_ss) * 100 + k] = '\0';
-                        break;
-                    }
-                    ss[(*num_ss) * 100 + k] = i_ptr[k];
-                }
+                strcpy(&ss[(*num_ss) * 100], element);
+
                 i_node->data = &ss[(*num_ss) * 100];
                 *num_ss = *num_ss + 1;
             }

@@ -12,6 +12,8 @@ struct list {
     node * head;
 };
 
+extern void mtll_free(int * is, float * fs, char * cs, char * ss, node * ns, struct list * lists);
+
 extern node * mtll_create(int size, int index, node * ns, int * is, float * fs, char * cs, char * ss, int * num_ns, int * num_is, int * num_fs, int * num_cs, int * num_ss);
 
 extern void mtll_view(node * head);

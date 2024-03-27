@@ -140,6 +140,9 @@ int main(void) {
                 }
             }
 
+            // part 3 commands
+                // NEST
+
             else{
                 printf("INVALID COMMAND: INPUT\n");
                 continue;
@@ -151,19 +154,7 @@ int main(void) {
         break;
     }
 
-    free(is);
-    free(fs);
-    free(cs);
-    free(ss);
-    free(ns);
-    free(lists);
-
-    is = NULL;
-    fs = NULL;
-    cs = NULL;
-    ss = NULL;
-    ns = NULL;
-    lists = NULL;
+    mtll_free(is, fs, cs, ss, ns, lists);
 
     return 0;
 }
