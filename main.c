@@ -126,6 +126,8 @@ int main(void) {
             else if (strcmp(cmds[0], "REMOVE") == 0){
                 lists[*deux_cmd - 0].head = NULL;
                 num_of_lists--;
+
+                printf("List %d has been removed\n", *deux_cmd);
                 continue;
             }
 

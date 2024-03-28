@@ -91,55 +91,76 @@ node * mtll_create(int size, int index, node * ns, int * is, float * fs, char * 
             }
 
             // checking input type
-            int is_integer = 1;
-            for (size_t j = 0; j < strlen(input); j++){
-                // not integer
-                if (input[j] < 48 || input[j] > 57){
-                    is_integer = 0;
-                    // float
-                    if (input[j] == '.') {
-                        nodes[i].data_type = 'f';
+            int data_type = 0; // 0:integer 1:float 2:string 3:char
+            int * dt_ptr = &data_type;
 
-                        float f;
-                        sscanf(input, "%f", &f);
-                        fs[*num_fs] = f;
-                        nodes[i].data = &fs[*num_fs];
-                        *num_fs = *num_fs + 1;
+            for (size_t j = 0; j < strlen(input); j++){
+                if (input[j] < 48 || input[j] > 57){
+                    // "-" sign
+                    if (input[j] == '-' && !(data_type == 1 || data_type == 2 || data_type == 3)){
+                        *dt_ptr = 0;
+                    }
+                    // float
+                    else if (input[j] == '.' && !(data_type == 2 || data_type == 3)){
+                        *dt_ptr = 1;
                     }
                     // string
-                    else if (strlen(input) > 1) {
-                        nodes[i].data_type = 's';
-
-                        for (int i = 0; i < strlen(input); i++){
-                            ss[(*num_ss) * 128 + i] = input[i];
-                        }
-
-                        nodes[i].data = &ss[(*num_ss) * 128];
-                        *num_ss = *num_ss + 1;
+                    else if (strlen(input) > 1){
+                        *dt_ptr = 2;
                     }
                     // char
-                    else {
-                        nodes[i].data_type = 'c';
-
-                        char c;
-                        sscanf(input, "%c", &c);
-                        cs[*num_cs] = c;
-                        nodes[i].data = &cs[*num_cs];
-                        *num_cs = *num_cs + 1;
+                    else{
+                        *dt_ptr = 3;
                     }
-                    break;
                 }
             }
-            // interger
-            if (is_integer == 1){
+
+            // insert data to node
+                // integer
+            if (data_type == 0){
                 nodes[i].data_type = 'i';
 
-                int integer;
-                sscanf(input, "%i", &integer);
-                is[*num_is] = integer;
-                nodes[i].data = &is[*num_is];
+                int integer =atoi(input);
+
+                is[*num_is * sizeof(int)] = integer;
+                nodes[i].data = &is[*num_is * sizeof(int)];
                 *num_is = *num_is + 1;
             }
+                // float
+            else if (data_type == 1) {
+                nodes[i].data_type = 'f';
+
+                float f = atof(input);
+
+                fs[*num_fs * sizeof(float)] = f;
+                nodes[i].data = &fs[*num_fs * sizeof(float)];
+                *num_fs = *num_fs + 1;
+            }
+                // string
+            else if (data_type == 2) {
+                nodes[i].data_type = 's';
+
+                for (int i = 0; i < strlen(input); i++){
+                    ss[(*num_ss) * 128 + i] = input[i];
+                }
+
+                nodes[i].data = &ss[(*num_ss) * 128];
+                *num_ss = *num_ss + 1;
+            }
+                // char
+            else if (data_type == 3) {
+                nodes[i].data_type = 'c';
+
+                char c;
+                sscanf(input, "%c", &c);
+                cs[*num_cs * sizeof(char)] = c;
+                nodes[i].data = &cs[*num_cs * sizeof(char)];
+                *num_cs = *num_cs + 1;
+            }
+            else {
+                printf("Interesting, this shouldn't be happening\n");
+            }
+            
 
             // linking nodes
             if (i < size-1){
