@@ -95,13 +95,19 @@ node * mtll_create(int size, int index, node * ns, int * is, float * fs, char * 
             int * dt_ptr = &data_type;
 
             for (size_t j = 0; j < strlen(input); j++){
-                if (input[j] < 48 || input[j] > 57){
+                // checking for NULL inputs
+                if (strcmp(input, "") == 0) {
+                    *dt_ptr = 3;
+                    break;
+                }
+
+                if (input[j] < '0' || input[j] > '9'){
                     // "-" sign
                     if (input[j] == '-' && !(data_type == 1 || data_type == 2 || data_type == 3)){
                         *dt_ptr = 0;
                     }
                     // float
-                    else if (input[j] == '.' && !(data_type == 2 || data_type == 3)){
+                    if (input[j] == '.' && !(data_type == 2 || data_type == 3)){
                         *dt_ptr = 1;
                     }
                     // string
@@ -112,6 +118,9 @@ node * mtll_create(int size, int index, node * ns, int * is, float * fs, char * 
                     else{
                         *dt_ptr = 3;
                     }
+                }
+                else if (!(data_type == 1 || data_type == 2 || data_type == 3)){
+                    *dt_ptr = 0;
                 }
             }
 

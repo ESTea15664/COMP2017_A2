@@ -127,7 +127,14 @@ int main(void) {
                 lists[*deux_cmd - 0].head = NULL;
                 num_of_lists--;
 
-                printf("List %d has been removed\n", *deux_cmd);
+                printf("List %d has been removed.\n\n", *deux_cmd);
+
+                printf("Number of lists: %d\n", num_of_lists);
+                for(int i = 0; i < index_of_lists; i++){
+                    if (lists[i].head != NULL){
+                        printf("List %d\n", lists[i].head->index);
+                    }
+                }
                 continue;
             }
 
