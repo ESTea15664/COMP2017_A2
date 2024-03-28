@@ -94,27 +94,27 @@ node * mtll_create(int size, int index, node * ns, int * is, float * fs, char * 
             int data_type = 0; // 0:int 1:float 2:string 3:char 4:powerd int
             int * dt_ptr = &data_type;
 
-            for (size_t j = 0; j < strlen(input) - 1; j++){
+            for (size_t j = 0; j < strlen(input); j++){
                 if (input[j] <= '/' || input[j] >= ':'){
                     // "-" sign
                     if (input[j] == '-' && data_type == 0){
                         *dt_ptr = 0;
                     }
-                    // "e" sign
-                    else if (input[j] == 101 && data_type == 0){
-                        *dt_ptr = 4;
-                    }
                     // float
                     else if (input[j] == '.' && !(data_type == 2 && data_type == 3)){
                         *dt_ptr = 1;
                     }
+                    // char
+                    else if (strlen(input) == 1){
+                        *dt_ptr = 3;
+                    }
+                    // "e" sign
+                    else if (input[j] == 'e' && data_type == 0){
+                        *dt_ptr = 4;
+                    }
                     // string
                     else if (strlen(input) > 1){
                         *dt_ptr = 2;
-                    }
-                    // char
-                    else{
-                        *dt_ptr = 3;
                     }
                 }
             }
@@ -475,15 +475,14 @@ node * mtll_insert(node * head, int position, char element[], node * ns, int * i
     // node insertion
     node * i_node = &ns[(*num_ns + 1) * sizeof(node)];
 
-    char input;
-    char * i_ptr = &input;
-    strcpy(i_ptr, element);
+    char input[128];
+    strcpy(input, element);
 
     i_node->data_type = 'c';
     i_node->data = NULL;
 
     // special case: empty character
-    if (strlen(i_ptr) == 0){
+    if (strlen(input) == 0){
         i_node->data_type = 'c';
         char s = '\0';
         ss[*num_ss*100] = s;
@@ -491,55 +490,105 @@ node * mtll_insert(node * head, int position, char element[], node * ns, int * i
     }
 
     // checking input type
-    int is_integer = 1;
+    int data_type = 0; // 0:int 1:float 2:string 3:char 4:powerd int
+    int * dt_ptr = &data_type;
 
-    // not integer
-    for (size_t j = 0; j < strlen(i_ptr); j++){
-        if (i_ptr[j] < 48 || i_ptr[j] > 57){
-            is_integer = 0;
-
+    for (size_t j = 0; j < strlen(input); j++){
+        if (input[j] <= '/' || input[j] >= ':'){
+            // "-" sign
+            if (input[j] == '-' && data_type == 0){
+                *dt_ptr = 0;
+            }
             // float
-            if (i_ptr[j] == '.') {
-                i_node->data_type = 'f';
-
-                float f = atof(element);
-                fs[*num_fs] = f;
-                i_node->data = &fs[*num_fs];
-                *num_fs = *num_fs + 1;
+            else if (input[j] == '.' && !(data_type == 2 && data_type == 3)){
+                *dt_ptr = 1;
             }
-
-            // string
-            else if (strlen(element) > 1) {
-                i_node->data_type = 's';
-
-                strcpy(&ss[(*num_ss) * 128], element);
-
-                i_node->data = &ss[(*num_ss) * 128];
-                *num_ss = *num_ss + 1;
-            }
-
             // char
-            else {
-                i_node->data_type = 'c';
-
-                char c;
-                sscanf(i_ptr, "%c", &c);
-                cs[*num_cs] = c;
-                i_node->data = &cs[*num_cs];
-                *num_cs = *num_cs + 1;
+            else if (strlen(input) == 1){
+                *dt_ptr = 3;
             }
-            break;
+            // "e" sign
+            else if (input[j] == 'e' && data_type == 0){
+                *dt_ptr = 4;
+            }
+            // string
+            else if (strlen(input) > 1){
+                *dt_ptr = 2;
+            }
         }
     }
+
+    // checking for NULL inputs
+    if (strcmp(input, "") == 0) {
+        *dt_ptr = 3;
+    }
+
+    // converting powerd int to int
+    int power = 0;
+    if (data_type == 4){
+        char spare[128];
+        strcpy(spare, input);
+
+        int base;
+        int factor;
+
+        sscanf(spare, "%de%d", &base, &factor);
         
-    // interger
-    if (is_integer == 1){
+        double result = pow(base, factor);
+
+        power = (int)result;
+    }
+        
+    // insert data to node
+        // int
+    if (data_type == 0){
         i_node->data_type = 'i';
-        int integer;
-        sscanf(i_ptr, "%i", &integer);
-        is[*num_is] = integer;
-        i_node->data = &is[*num_is];
+
+        int integer =atoi(input);
+
+        is[*num_is * sizeof(int)] = integer;
+        i_node->data = &is[*num_is * sizeof(int)];
         *num_is = *num_is + 1;
+    }
+        // powered int
+    else if (data_type == 4){
+        i_node->data_type = 'i';
+
+        is[*num_is * sizeof(int)] = power;
+        i_node->data = &is[*num_is * sizeof(int)];
+        *num_is = *num_is + 1;
+    }
+        // float
+    else if (data_type == 1) {
+        i_node->data_type = 'f';
+
+        float f = atof(input);
+
+        fs[*num_fs * sizeof(float)] = f;
+        i_node->data = &fs[*num_fs * sizeof(float)];
+        *num_fs = *num_fs + 1;
+    }
+        // string
+    else if (data_type == 2) {
+        i_node->data_type = 's';
+
+        for (int i = 0; i < strlen(input); i++){
+            ss[(*num_ss) * 128 + i] = input[i];
+        }
+
+        i_node->data = &ss[(*num_ss) * 128];
+        *num_ss = *num_ss + 1;
+    }
+        // char
+    else if (data_type == 3) {
+        i_node->data_type = 'c';
+
+        cs[*num_cs * sizeof(char)] = *input;
+        i_node->data = &cs[*num_cs * sizeof(char)];
+        *num_cs = *num_cs + 1;
+    }
+    else {
+        printf("Interesting, this shouldn't be happening\n");
     }
 
     // insert new element to list
