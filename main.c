@@ -61,10 +61,16 @@ int main(void) {
             // checking different first command inputs
                 // NEW
             if (strcmp(cmds[0], "NEW") == 0){
-                lists[index_of_lists].head = mtll_create(*deux_cmd, index_of_lists, ns, is, fs, cs, ss, lists, num_ns, num_is, num_fs, num_cs, num_ss);
-                if (lists[index_of_lists].head->data_type != 'n'){
-                    num_of_lists++;
-                    index_of_lists++;
+                if (numeric == 1){
+                    lists[index_of_lists].head = mtll_create(*deux_cmd, index_of_lists, ns, is, fs, cs, ss, lists, num_ns, num_is, num_fs, num_cs, num_ss);
+                    if (lists[index_of_lists].head->data_type != 'n'){
+                        num_of_lists++;
+                        index_of_lists++;
+                    }
+                }
+                else {
+                    printf("INVALID COMMAND: NEW\n");
+                    continue;
                 }
             }
 
@@ -76,6 +82,7 @@ int main(void) {
                     }
                     else{
                         printf("INVALID COMMAND: VIEW\n");
+                        continue;
                     }
                 }
                 else if (strcmp(cmds[1], "ALL") == 0){
@@ -100,6 +107,7 @@ int main(void) {
                     }
                     else{
                         printf("INVALID COMMAND: VIEW\n");
+                        continue;
                     }
                 }
                 else{

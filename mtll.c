@@ -157,7 +157,7 @@ node * mtll_create(int size, int index, node * ns, int * is, float * fs, char * 
     if (nested == 1){
         printf("nested ");
     }
-    printf("list %d: ", index);
+    printf("List %d: ", index);
     mtll_view(&nodes[0], 0);
     
     return &nodes[0];
@@ -170,7 +170,7 @@ void mtll_view(node * head, int reference){
         if (cursor.next != NULL){
             // reference node
             if (cursor.data_type == 'r'){
-                printf("{list %d}", cursor.index);
+                printf("{List %d}", cursor.index);
             }
             else if (cursor.data_type == 'i'){
                 int * i = cursor.data;
@@ -195,7 +195,7 @@ void mtll_view(node * head, int reference){
         else{
             // reference node
             if (cursor.data_type == 'r'){
-                printf("{list %d}", cursor.index);
+                printf("{List %d}", cursor.index);
             }
             else if (cursor.data_type == 'i'){
                 int * i = cursor.data;
@@ -408,7 +408,7 @@ node * mtll_insert(node * head, int position, char element[], node * ns, int * i
         }
 
         // display list content
-        printf("list %d: ", head->index);
+        printf("List %d: ", head->index);
         mtll_view(head, 0);
 
         return head;
@@ -489,7 +489,7 @@ node * mtll_insert(node * head, int position, char element[], node * ns, int * i
 
     // insertion for empty lists
     if (bottom->data_type == 'e'){
-        printf("list %d: ", head->index);
+        printf("List %d: ", head->index);
         mtll_view(i_node, 0);
         return i_node;
     }
@@ -512,7 +512,7 @@ node * mtll_insert(node * head, int position, char element[], node * ns, int * i
     }
 
     // display list content
-    printf("list %d: ", head->index);
+    printf("List %d: ", head->index);
     mtll_view(head, 0);
 
     return head;
@@ -583,7 +583,7 @@ node * mtll_delete(node * head, int position, int index, node * ns, int * num_ns
     }
 
     // display list content
-    printf("list %d: ", head->index + 1);
+    printf("List %d: ", head->index + 1);
     mtll_view(head, 0);
 
     return head;
