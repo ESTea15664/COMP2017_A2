@@ -5,7 +5,7 @@
 
 int main(void) {
     // recieving command from stdin
-    char buffer[100];
+    char buffer[256];
 
     // a variable to keep track of number of lists
     int index_of_lists = 0;
@@ -70,8 +70,8 @@ int main(void) {
                 }
                 else {
                     printf("INVALID COMMAND: NEW\n");
-                    continue;
                 }
+                continue;
             }
 
                 // VIEW
@@ -82,16 +82,17 @@ int main(void) {
                     }
                     else{
                         printf("INVALID COMMAND: VIEW\n");
-                        continue;
                     }
+                    continue;
                 }
                 else if (strcmp(cmds[1], "ALL") == 0){
-                    printf("Number of all list: %d\n", num_of_lists);
+                    printf("Number of lists: %d\n", num_of_lists);
                     for(int i = 0; i < index_of_lists; i++){
                         if (lists[i].head != NULL){
                             printf("List %d\n", lists[i].head->index);
                         }
                     }
+                    continue;
                 }
                 else{
                     printf("INVALID COMMAND: INPUT\n");
@@ -107,24 +108,25 @@ int main(void) {
                     }
                     else{
                         printf("INVALID COMMAND: VIEW\n");
-                        continue;
                     }
                 }
                 else{
                     printf("INVALID COMMAND: INPUT\n");
-                    continue;
                 }
+                continue;
             }
 
                 // TYPE
             else if (strcmp(cmds[0], "TYPE") == 0){
                 mtll_type(lists[*deux_cmd - 0].head);
+                continue;
             }
 
                 // REMOVE (set head as "NULL")
             else if (strcmp(cmds[0], "REMOVE") == 0){
                 lists[*deux_cmd - 0].head = NULL;
                 num_of_lists--;
+                continue;
             }
 
             // part 2 commands
@@ -145,6 +147,8 @@ int main(void) {
                 if (insertion != NULL){
                     lists[*deux_cmd - 0].head = insertion;
                 }
+
+                continue;
             }
 
                 // DELETE
@@ -162,19 +166,17 @@ int main(void) {
                 if (deletion != NULL){
                     (lists[*deux_cmd - 0]).head = deletion;
                 }
-            }
 
-            // part 3 commands
-                // NEST
-
-            else{
-                printf("INVALID COMMAND: INPUT\n");
                 continue;
             }
 
-
-            continue;
+            else{
+                printf("%s, %s\n", cmds[0], cmds[1]);
+                printf("INVALID COMMAND: INPUT\n");
+                continue;
+            }
         }
+        
         break;
     }
 

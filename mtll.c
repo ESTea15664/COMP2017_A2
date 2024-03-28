@@ -37,13 +37,13 @@ node * mtll_create(int size, int index, node * ns, int * is, float * fs, char * 
         return &nodes[0];
     }
 
-    char buffer[100];
+    char buffer[256];
 
     int nested = 0;
 
     for (int i = 0; i < size; i++){
         if (fgets(buffer, sizeof(buffer), stdin) != NULL){
-            char input[100];
+            char input[128];
             strcpy(input, buffer);
 
             // remove new line character
@@ -109,10 +109,12 @@ node * mtll_create(int size, int index, node * ns, int * is, float * fs, char * 
                     // string
                     else if (strlen(input) > 1) {
                         nodes[i].data_type = 's';
-                        
-                        strcpy(&ss[(*num_ss) * 100], input);
 
-                        nodes[i].data = &ss[(*num_ss) * 100];
+                        for (int i = 0; i < strlen(input); i++){
+                            ss[(*num_ss) * 128 + i] = input[i];
+                        }
+
+                        nodes[i].data = &ss[(*num_ss) * 128];
                         *num_ss = *num_ss + 1;
                     }
                     // char
@@ -159,7 +161,7 @@ node * mtll_create(int size, int index, node * ns, int * is, float * fs, char * 
     }
     printf("List %d: ", index);
     mtll_view(&nodes[0], 0);
-    
+
     return &nodes[0];
 }
 
@@ -454,9 +456,9 @@ node * mtll_insert(node * head, int position, char element[], node * ns, int * i
             else if (strlen(element) > 1) {
                 i_node->data_type = 's';
 
-                strcpy(&ss[(*num_ss) * 100], element);
+                strcpy(&ss[(*num_ss) * 128], element);
 
-                i_node->data = &ss[(*num_ss) * 100];
+                i_node->data = &ss[(*num_ss) * 128];
                 *num_ss = *num_ss + 1;
             }
 
