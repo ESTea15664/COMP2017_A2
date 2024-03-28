@@ -91,23 +91,21 @@ node * mtll_create(int size, int index, node * ns, int * is, float * fs, char * 
             }
 
             // checking input type
-            int data_type = 0; // 0:integer 1:float 2:string 3:char
+            int data_type = 0; // 0:int 1:float 2:string 3:char 4:powerd int
             int * dt_ptr = &data_type;
 
-            for (size_t j = 0; j < strlen(input); j++){
-                // checking for NULL inputs
-                if (strcmp(input, "") == 0) {
-                    *dt_ptr = 3;
-                    break;
-                }
-
-                if (input[j] < '0' || input[j] > '9'){
+            for (size_t j = 0; j < strlen(input) - 1; j++){
+                if (input[j] <= '/' || input[j] >= ':'){
                     // "-" sign
-                    if (input[j] == '-' && !(data_type == 1 || data_type == 2 || data_type == 3)){
+                    if (input[j] == '-' && data_type == 0){
                         *dt_ptr = 0;
                     }
+                    // "e" sign
+                    else if (input[j] == 101 && data_type == 0){
+                        *dt_ptr = 4;
+                    }
                     // float
-                    if (input[j] == '.' && !(data_type == 2 || data_type == 3)){
+                    else if (input[j] == '.' && !(data_type == 2 && data_type == 3)){
                         *dt_ptr = 1;
                     }
                     // string
@@ -119,19 +117,45 @@ node * mtll_create(int size, int index, node * ns, int * is, float * fs, char * 
                         *dt_ptr = 3;
                     }
                 }
-                else if (!(data_type == 1 || data_type == 2 || data_type == 3)){
-                    *dt_ptr = 0;
-                }
+            }
+
+            // checking for NULL inputs
+            if (strcmp(input, "") == 0) {
+                *dt_ptr = 3;
+            }
+
+            // converting powerd int to int
+            int power = 0;
+            if (data_type == 4){
+                char spare[128];
+                strcpy(spare, input);
+
+                int base;
+                int factor;
+
+                sscanf(spare, "%de%d", &base, &factor);
+                
+                double result = pow(base, factor);
+
+                power = (int)result;
             }
 
             // insert data to node
-                // integer
+                // int
             if (data_type == 0){
                 nodes[i].data_type = 'i';
 
                 int integer =atoi(input);
 
                 is[*num_is * sizeof(int)] = integer;
+                nodes[i].data = &is[*num_is * sizeof(int)];
+                *num_is = *num_is + 1;
+            }
+                // powered int
+            else if (data_type == 4){
+                nodes[i].data_type = 'i';
+
+                is[*num_is * sizeof(int)] = power;
                 nodes[i].data = &is[*num_is * sizeof(int)];
                 *num_is = *num_is + 1;
             }
@@ -160,9 +184,7 @@ node * mtll_create(int size, int index, node * ns, int * is, float * fs, char * 
             else if (data_type == 3) {
                 nodes[i].data_type = 'c';
 
-                char c;
-                sscanf(input, "%c", &c);
-                cs[*num_cs * sizeof(char)] = c;
+                cs[*num_cs * sizeof(char)] = *input;
                 nodes[i].data = &cs[*num_cs * sizeof(char)];
                 *num_cs = *num_cs + 1;
             }
@@ -213,8 +235,10 @@ void mtll_view(node * head, int reference){
                 printf("%.02f", *f);
             }
             else if (cursor.data_type == 'c'){
-                char * c = cursor.data;
-                printf("%c", *c);
+                if (strcmp(cursor.data, "") != 0){
+                    char * c = cursor.data;
+                    printf("%c", *c);
+                }
             }
             else if (cursor.data_type == 's'){
                 char * s = cursor.data;
@@ -238,8 +262,10 @@ void mtll_view(node * head, int reference){
                 printf("%.02f", *f);
             }
             else if (cursor.data_type == 'c'){
-                char * c = cursor.data;
-                printf("%c", *c);
+                if (strcmp(cursor.data, "") != 0){
+                    char * c = cursor.data;
+                    printf("%c", *c);
+                }
             }
             else if (cursor.data_type == 's'){
                 char * s = cursor.data;
@@ -325,7 +351,7 @@ void mtll_type(node * head){
                 printf("{reference}");
             }
             else if (cursor.data_type == 'i'){
-                printf("integer");
+                printf("int");
             }
             else if (cursor.data_type == 'f'){
                 printf("float");
@@ -346,7 +372,7 @@ void mtll_type(node * head){
                 printf("{reference}");
             }
             else if (cursor.data_type == 'i'){
-                printf("integer");
+                printf("int");
             }
             else if (cursor.data_type == 'f'){
                 printf("float");
