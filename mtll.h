@@ -3,9 +3,12 @@
 
 typedef struct mtll{
     int index;
+
     char data_type;
     void * data;
+
     struct mtll * next;
+    struct mtll ** reference;
 } node;
 
 struct list {
@@ -16,7 +19,7 @@ extern void mtll_free(int * is, float * fs, char * cs, char * ss, node * ns, str
 
 extern node * mtll_create(int size, int index, node * ns, int * is, float * fs, char * cs, char * ss, struct list * lists, int * num_ns, int * num_is, int * num_fs, int * num_cs, int * num_ss);
 
-extern void mtll_view(node * head);
+extern void mtll_view(node * head, int reference);
 
 extern void mtll_view_nested(node * head);
 
