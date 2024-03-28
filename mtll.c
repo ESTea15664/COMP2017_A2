@@ -49,10 +49,10 @@ node * mtll_create(int size, int index, node * ns, int * is, float * fs, char * 
             // remove new line character
             input[strlen(input) - 1] = '\0';
 
-            nodes[i].index = index;
-            nodes[i].data_type = 'c';
-            nodes[i].data = NULL;
-            nodes[i].reference = NULL;
+            nodes[i * sizeof(node)].index = index;
+            nodes[i * sizeof(node)].data_type = 'c';
+            nodes[i * sizeof(node)].data = NULL;
+            nodes[i * sizeof(node)].reference = NULL;
 
             // nest list
             if (input[0] == '{' && input[strlen(input) - 1] == '}'){
@@ -67,15 +67,15 @@ node * mtll_create(int size, int index, node * ns, int * is, float * fs, char * 
                     continue;
                 }
 
-                nodes[i].reference = &lists[list_num].head;
-                nodes[i].data_type = 'r';
+                nodes[i * sizeof(node)].reference = &lists[list_num].head;
+                nodes[i * sizeof(node)].data_type = 'r';
 
                 // linking nodes
                 if (i < size-1){
-                    nodes[i].next = &nodes[i+1];
+                    nodes[i * sizeof(node)].next = &nodes[i+1];
                 }
                 else{
-                    nodes[i].next = NULL;
+                    nodes[i * sizeof(node)].next = NULL;
                 }
 
                 *num_ns = *num_ns + 1;
@@ -84,7 +84,8 @@ node * mtll_create(int size, int index, node * ns, int * is, float * fs, char * 
 
             // special case: empty character
             if (strlen(input) == 0){
-                nodes[i].data_type = 'c';
+                nodes[i * sizeof(node)]
+.data_type = 'c';
                 char s = '\0';
                 ss[*num_ss*100] = s;
                 *num_ss = *num_ss + 1;
@@ -143,62 +144,61 @@ node * mtll_create(int size, int index, node * ns, int * is, float * fs, char * 
             // insert data to node
                 // int
             if (data_type == 0){
-                nodes[i].data_type = 'i';
+                nodes[i * sizeof(node)].data_type = 'i';
 
                 int integer =atoi(input);
 
                 is[*num_is * sizeof(int)] = integer;
-                nodes[i].data = &is[*num_is * sizeof(int)];
+                nodes[i * sizeof(node)].data = &is[*num_is * sizeof(int)];
                 *num_is = *num_is + 1;
             }
                 // powered int
             else if (data_type == 4){
-                nodes[i].data_type = 'i';
+                nodes[i * sizeof(node)].data_type = 'i';
 
                 is[*num_is * sizeof(int)] = power;
-                nodes[i].data = &is[*num_is * sizeof(int)];
+                nodes[i * sizeof(node)].data = &is[*num_is * sizeof(int)];
                 *num_is = *num_is + 1;
             }
                 // float
             else if (data_type == 1) {
-                nodes[i].data_type = 'f';
+                nodes[i * sizeof(node)].data_type = 'f';
 
                 float f = atof(input);
 
                 fs[*num_fs * sizeof(float)] = f;
-                nodes[i].data = &fs[*num_fs * sizeof(float)];
+                nodes[i * sizeof(node)].data = &fs[*num_fs * sizeof(float)];
                 *num_fs = *num_fs + 1;
             }
                 // string
             else if (data_type == 2) {
-                nodes[i].data_type = 's';
+                nodes[i * sizeof(node)].data_type = 's';
 
-                for (int i = 0; i < strlen(input); i++){
+                for (int i = 0; i <= strlen(input); i++){
                     ss[(*num_ss) * 128 + i] = input[i];
                 }
 
-                nodes[i].data = &ss[(*num_ss) * 128];
+                nodes[i * sizeof(node)].data = &ss[(*num_ss) * 128];
                 *num_ss = *num_ss + 1;
             }
                 // char
             else if (data_type == 3) {
-                nodes[i].data_type = 'c';
+                nodes[i * sizeof(node)].data_type = 'c';
 
                 cs[*num_cs * sizeof(char)] = *input;
-                nodes[i].data = &cs[*num_cs * sizeof(char)];
+                nodes[i * sizeof(node)].data = &cs[*num_cs * sizeof(char)];
                 *num_cs = *num_cs + 1;
             }
             else {
                 printf("Interesting, this shouldn't be happening\n");
             }
             
-
             // linking nodes
             if (i < size-1){
-                nodes[i].next = &nodes[i+1];
+                nodes[i * sizeof(node)].next = &nodes[i+1];
             }
             else{
-                nodes[i].next = NULL;
+                nodes[i * sizeof(node)].next = NULL;
             }
 
             *num_ns = *num_ns + 1;
@@ -572,7 +572,7 @@ node * mtll_insert(node * head, int position, char element[], node * ns, int * i
     else if (data_type == 2) {
         i_node->data_type = 's';
 
-        for (int i = 0; i < strlen(input); i++){
+        for (int i = 0; i <= strlen(input); i++){
             ss[(*num_ss) * 128 + i] = input[i];
         }
 
