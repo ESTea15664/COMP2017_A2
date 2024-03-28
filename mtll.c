@@ -38,20 +38,16 @@ node * mtll_create(int size, int index, node * ns, int * is, float * fs, char * 
     }
 
     char buffer[100];
-    char input;
-    char * i_ptr = &input;
 
     int nested = 0;
 
     for (int i = 0; i < size; i++){
         if (fgets(buffer, sizeof(buffer), stdin) != NULL){
-            char str[100];
-            strcpy(str, buffer);
+            char input[100];
+            strcpy(input, buffer);
 
             // remove new line character
-            str[strlen(str) - 1] = '\0';
-
-            sscanf(buffer, "%s", i_ptr);
+            input[strlen(input) - 1] = '\0';
 
             nodes[i].index = index;
             nodes[i].data_type = 'c';
@@ -59,11 +55,11 @@ node * mtll_create(int size, int index, node * ns, int * is, float * fs, char * 
             nodes[i].reference = NULL;
 
             // nest list
-            if (str[0] == '{' && str[strlen(str) - 1] == '}'){
+            if (input[0] == '{' && input[strlen(input) - 1] == '}'){
                 nested = 1;
 
                 int list_num;
-                sscanf(str, "{%d}", &list_num);
+                sscanf(input, "{%d}", &list_num);
 
                 if (list_num > *num_ns || lists[list_num].head == NULL){
                     i--;
@@ -87,7 +83,7 @@ node * mtll_create(int size, int index, node * ns, int * is, float * fs, char * 
             }
 
             // special case: empty character
-            if (strlen(i_ptr) == 0){
+            if (strlen(input) == 0){
                 nodes[i].data_type = 'c';
                 char s = '\0';
                 ss[*num_ss*100] = s;
@@ -96,25 +92,25 @@ node * mtll_create(int size, int index, node * ns, int * is, float * fs, char * 
 
             // checking input type
             int is_integer = 1;
-            for (size_t j = 0; j < strlen(i_ptr); j++){
+            for (size_t j = 0; j < strlen(input); j++){
                 // not integer
-                if (i_ptr[j] < 48 || i_ptr[j] > 57){
+                if (input[j] < 48 || input[j] > 57){
                     is_integer = 0;
                     // float
-                    if (i_ptr[j] == '.') {
+                    if (input[j] == '.') {
                         nodes[i].data_type = 'f';
 
                         float f;
-                        sscanf(i_ptr, "%f", &f);
+                        sscanf(input, "%f", &f);
                         fs[*num_fs] = f;
                         nodes[i].data = &fs[*num_fs];
                         *num_fs = *num_fs + 1;
                     }
                     // string
-                    else if (strlen(str) > 1) {
+                    else if (strlen(input) > 1) {
                         nodes[i].data_type = 's';
                         
-                        strcpy(&ss[(*num_ss) * 100], str);
+                        strcpy(&ss[(*num_ss) * 100], input);
 
                         nodes[i].data = &ss[(*num_ss) * 100];
                         *num_ss = *num_ss + 1;
@@ -124,7 +120,7 @@ node * mtll_create(int size, int index, node * ns, int * is, float * fs, char * 
                         nodes[i].data_type = 'c';
 
                         char c;
-                        sscanf(i_ptr, "%c", &c);
+                        sscanf(input, "%c", &c);
                         cs[*num_cs] = c;
                         nodes[i].data = &cs[*num_cs];
                         *num_cs = *num_cs + 1;
@@ -137,7 +133,7 @@ node * mtll_create(int size, int index, node * ns, int * is, float * fs, char * 
                 nodes[i].data_type = 'i';
 
                 int integer;
-                sscanf(i_ptr, "%i", &integer);
+                sscanf(input, "%i", &integer);
                 is[*num_is] = integer;
                 nodes[i].data = &is[*num_is];
                 *num_is = *num_is + 1;
