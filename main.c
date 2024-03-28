@@ -32,7 +32,7 @@ int main(void) {
     int num_c = 0;
     int * num_cs = &num_c;
 
-    char * ss = malloc(100 * 100);
+    char * ss = malloc(100 * 128);
     int num_s = 0;
     int * num_ss = &num_s;
     
@@ -72,7 +72,7 @@ int main(void) {
             else if (strcmp(cmds[0], "VIEW") == 0){
                 if (numeric){
                     if (lists[*deux_cmd - 0].head != NULL){
-                        mtll_view(lists[*deux_cmd - 0].head);
+                        mtll_view(lists[*deux_cmd - 0].head, 0);
                     }
                     else{
                         printf("INVALID COMMAND: VIEW\n");
