@@ -2,696 +2,498 @@
 #include<stdio.h>
 #include<stdlib.h>
 #include<string.h>
-#include<math.h>
 
-void mtll_free(int * is, float * fs, char * cs, char * ss, node * ns, struct list * lists){
-    free(lists);
-    free(ns);
-    free(is);
-    free(fs);
-    free(cs);
-    free(ss);
+int my_pow(int base, int expo){
+    int result = 1;
 
-    is = NULL;
-    fs = NULL;
-    cs = NULL;
-    ss = NULL;
-    ns = NULL;
-    lists = NULL;
-}
-
-node * mtll_create(int size, int index, node * ns, int * is, float * fs, char * cs, char * ss, struct list * lists, int * num_ns, int * num_is, int * num_fs, int * num_cs, int * num_ss) {
-    node * nodes = &ns[(*num_ns + 1) * sizeof(node)];
-
-    // check size value
-    if (size == 0 || size == 45){
-        nodes[0].index = index;
-        nodes[0].data_type = 'e'; 
-        nodes[0].data = NULL;
-        nodes[0].next = NULL;
-        if (size == 45){
-            printf("INVALID COMMAND: NEW\n");
-            nodes[0].data_type = 'n';
+    if (expo >= 0){
+        for (int i = 0; i < expo; i++){
+            result *= base;
         }
-        *num_ns = *num_ns + 1;
-        return &nodes[0];
+    }
+    else{
+        expo = -expo;
+        for (int i = 0; i < expo; i++){
+            result /= base;
+        }
     }
 
-    char buffer[256];
+    return result;
+}
 
-    int nested = 0;
+node * mtll_create(int size, node * nodes, list * lists, int * num_nodes, int * num_lists){
+    char buffer[128];
 
-    for (int i = 0; i < size; i++){
-        if (fgets(buffer, sizeof(buffer), stdin) != NULL){
-            char input[128];
-            strcpy(input, buffer);
+    node * head = NULL;
 
-            // remove new line character
-            input[strlen(input) - 1] = '\0';
+    int nest = 0;
 
-            nodes[i * sizeof(node)].index = index;
-            nodes[i * sizeof(node)].data_type = 'c';
-            nodes[i * sizeof(node)].data = NULL;
-            nodes[i * sizeof(node)].reference = NULL;
+    // check for special cases (size = 0 and size < 0)
+    if (size == 0){
+        node * new_node = &nodes[*num_nodes * sizeof(node)];
+        new_node->list_index = *num_lists;
+        new_node->data_type = 'e';
+        new_node->next = NULL;
 
-            // nest list
-            if (input[0] == '{' && input[strlen(input) - 1] == '}'){
-                nested = 1;
+        *num_nodes = *num_nodes + 1;
 
-                int list_num;
-                sscanf(input, "{%d}", &list_num);
+        return new_node;
+    }
+    else if (size < 0){
+        return NULL;
+    }
 
-                if (list_num > *num_ns || lists[list_num].head == NULL){
-                    i--;
-                    printf("INVALID COMMAND: NEW\n");
-                    continue;
-                }
+    // loop until empty line or reached size
+    for (int i = 0; (i < size) && fgets(buffer, sizeof(buffer), stdin) != NULL; i++){
+        // copy input from buffer
+        char input[128];
+        strcpy(input, buffer);
+        // remove new line character
+        input[strlen(input) - 1] ='\0';
 
-                nodes[i * sizeof(node)].reference = &lists[list_num].head;
-                nodes[i * sizeof(node)].data_type = 'r';
+        // node creation
+        node * new_node = &nodes[*num_nodes * sizeof(node)];
+        new_node->list_index = *num_lists;
 
-                // linking nodes
-                if (i < size-1){
-                    nodes[i * sizeof(node)].next = &nodes[i+1];
-                }
-                else{
-                    nodes[i * sizeof(node)].next = NULL;
-                }
+        if (head == NULL){
+            head = new_node;
+        }
+            // nested list
+        if (input[0] == '{' && input[strlen(input) - 1] == '}'){
+            // reminder for print
+            nest = 1;
 
-                *num_ns = *num_ns + 1;
-                continue;
-            }
+            // get list index from input
+            int target_index;
 
-            // special case: empty character
-            if (strlen(input) == 0){
-                nodes[i * sizeof(node)]
-.data_type = 'c';
-                char s = '\0';
-                ss[*num_ss*100] = s;
-                *num_ss = *num_ss + 1;
-            }
+            char copy[128];
+            strcpy(copy, input);
 
-            // checking input type
-            int data_type = 0; // 0:int 1:float 2:string 3:char 4:powerd int
+            sscanf(copy, "{%d}", &target_index);
+
+            // reference list in node
+            new_node->data_type = 'r';
+            new_node->reference = lists[target_index * sizeof(node)].head;
+        }
+            // simple list
+        else{
+            // check data type
+            int data_type = 0; // 0:int 1:power 2:float 3:char 4:string
             int * dt_ptr = &data_type;
 
-            for (size_t j = 0; j < strlen(input); j++){
-                if (input[j] <= '/' || input[j] >= ':'){
-                    // "-" sign
-                    if (input[j] == '-' && data_type == 0){
-                        *dt_ptr = 0;
-                    }
-                    // float
-                    else if (input[j] == '.' && !(data_type == 2 && data_type == 3)){
-                        *dt_ptr = 1;
-                    }
-                    // char
-                    else if (strlen(input) == 1){
-                        *dt_ptr = 3;
-                    }
-                    // "e" sign
-                    else if (input[j] == 'e' && data_type == 0){
-                        *dt_ptr = 4;
-                    }
-                    // string
-                    else if (strlen(input) > 1){
-                        *dt_ptr = 2;
-                    }
-                }
-            }
-
-            // checking for NULL inputs
-            if (strcmp(input, "") == 0) {
+            // speical case: empty input
+            if(strlen(input) == 0){
                 *dt_ptr = 3;
             }
-
-            // converting powerd int to int
-            int power = 0;
-            if (data_type == 4){
-                char spare[128];
-                strcpy(spare, input);
-
-                int base;
-                int factor;
-
-                sscanf(spare, "%de%d", &base, &factor);
-                
-                double result = pow(base, factor);
-
-                power = (int)result;
+            // non-empty input
+            else{
+                for(int j = 0; j < strlen(input); j++){
+                    // if input[j] is not a number
+                    if (input[j] < '0' || input[j] > '9'){
+                        // if input only has one char
+                        if (strlen(input) == 1){
+                            *dt_ptr = 3;
+                        }
+                        // if input[j] is a minus sign
+                        else if (input[j] == '-' && (data_type == 0 || data_type == 1)){
+                            continue;
+                        }
+                        // if input[j] is a power sign
+                        else if (input[j] == 'e' && data_type == 0){
+                            *dt_ptr = 1;
+                        }
+                        // if input[j] is a dot
+                        else if (input[j] == '.' && data_type == 0){
+                            *dt_ptr = 2;
+                        }
+                        // else ipnut is a string
+                        else {
+                            *dt_ptr = 4;
+                        }
+                    }
+                }
             }
 
             // insert data to node
                 // int
             if (data_type == 0){
-                nodes[i * sizeof(node)].data_type = 'i';
-
-                int integer =atoi(input);
-
-                is[*num_is * sizeof(int)] = integer;
-                nodes[i * sizeof(node)].data = &is[*num_is * sizeof(int)];
-                *num_is = *num_is + 1;
+                new_node->i_value = atoi(input);
+                new_node->data_type = 'i';
             }
-                // powered int
-            else if (data_type == 4){
-                nodes[i * sizeof(node)].data_type = 'i';
+                // power
+            else if (data_type == 1){
+                int base;
+                int expo;
+                sscanf(input, "%de%d", &base, &expo);
 
-                is[*num_is * sizeof(int)] = power;
-                nodes[i * sizeof(node)].data = &is[*num_is * sizeof(int)];
-                *num_is = *num_is + 1;
+                new_node->i_value = my_pow(base, expo);
+                new_node->data_type = 'i';
             }
                 // float
-            else if (data_type == 1) {
-                nodes[i * sizeof(node)].data_type = 'f';
-
-                float f = atof(input);
-
-                fs[*num_fs * sizeof(float)] = f;
-                nodes[i * sizeof(node)].data = &fs[*num_fs * sizeof(float)];
-                *num_fs = *num_fs + 1;
-            }
-                // string
-            else if (data_type == 2) {
-                nodes[i * sizeof(node)].data_type = 's';
-
-                for (int i = 0; i <= strlen(input); i++){
-                    ss[(*num_ss) * 128 + i] = input[i];
-                }
-
-                nodes[i * sizeof(node)].data = &ss[(*num_ss) * 128];
-                *num_ss = *num_ss + 1;
+            else if (data_type == 2){
+                new_node->f_value = atof(input);
+                new_node->data_type = 'f';
             }
                 // char
-            else if (data_type == 3) {
-                nodes[i * sizeof(node)].data_type = 'c';
-
-                cs[*num_cs * sizeof(char)] = *input;
-                nodes[i * sizeof(node)].data = &cs[*num_cs * sizeof(char)];
-                *num_cs = *num_cs + 1;
+            else if (data_type == 3){
+                new_node->c_value = input[0];
+                new_node->data_type = 'c';   
             }
-            else {
-                printf("Interesting, this shouldn't be happening\n");
+                // string
+            else if (data_type == 4){
+                strcpy(new_node->s_value, input);
+                new_node->data_type = 's'; 
             }
-            
-            // linking nodes
-            if (i < size-1){
-                nodes[i * sizeof(node)].next = &nodes[i+1];
-            }
-            else{
-                nodes[i * sizeof(node)].next = NULL;
-            }
-
-            *num_ns = *num_ns + 1;
-            continue;
         }
-        break;
-    }
 
-    // display list content
-    if (nested == 1){
-        printf("nested ");
-    }
-    printf("List %d: ", index);
-    mtll_view(&nodes[0], 0);
-
-    return &nodes[0];
-}
-
-void mtll_view(node * head, int reference){
-    node cursor = *head;
-
-    while (1){
-        if (cursor.next != NULL){
-            // reference node
-            if (cursor.data_type == 'r'){
-                printf("{List %d}", cursor.index);
-            }
-            else if (cursor.data_type == 'i'){
-                int * i = cursor.data;
-                printf("%d", *i);
-            }
-            else if (cursor.data_type == 'f'){
-                float * f = cursor.data;
-                printf("%.02f", *f);
-            }
-            else if (cursor.data_type == 'c'){
-                if (strcmp(cursor.data, "") != 0){
-                    char * c = cursor.data;
-                    printf("%c", *c);
-                }
-            }
-            else if (cursor.data_type == 's'){
-                char * s = cursor.data;
-                printf("%s", s);
-            }
-
-            printf(" -> ");
-            cursor = *cursor.next;
+        // link nodes
+        *num_nodes = *num_nodes + 1;
+        if (i < size - 1){
+            new_node->next = &nodes[*num_nodes * sizeof(node)];
         }
         else{
-            // reference node
-            if (cursor.data_type == 'r'){
-                printf("{List %d}", cursor.index);
-            }
-            else if (cursor.data_type == 'i'){
-                int * i = cursor.data;
-                printf("%d", *i);
-            }
-            else if (cursor.data_type == 'f'){
-                float * f = cursor.data;
-                printf("%.02f", *f);
-            }
-            else if (cursor.data_type == 'c'){
-                if (strcmp(cursor.data, "") != 0){
-                    char * c = cursor.data;
-                    printf("%c", *c);
-                }
-            }
-            else if (cursor.data_type == 's'){
-                char * s = cursor.data;
-                printf("%s", s);
-            }
-
-            if (reference == 0){
-                printf("\n");
-            }
-            break;
+            new_node->next = NULL;
         }
+    }
+
+    // print list
+    if (nest == 0){
+        printf("List %d: ", head->list_index);
+    }
+    else{
+        printf("Nested %d: ", head->list_index);
+    }
+    
+    mtll_view(head);
+    printf("\n");
+
+    return head;
+}
+
+void mtll_view(node * head){
+    node * cursor = head;
+
+    while(cursor != NULL){
+        if (cursor->data_type == 'i'){
+            printf("%d", cursor->i_value);
+        }
+        else if (cursor->data_type == 'f'){
+            printf("%.02f", cursor->f_value);
+        }
+        else if (cursor->data_type == 'c'){
+            printf("%c", cursor->c_value);
+        }
+        else if (cursor->data_type == 's'){
+            printf("%s", cursor->s_value);
+        }
+        else if (cursor->data_type == 'r'){
+            printf("{List %d}", cursor->reference->list_index);
+        }
+
+        // print arrow if next != NULL
+        if (cursor->next != NULL){
+            printf(" -> ");
+        }
+        cursor = cursor->next;
     }
 }
 
 void mtll_view_nested(node * head){
-    node cursor = *head;
+    node * cursor = head;
 
-    while (1){
-        if (cursor.next != NULL){
-            // reference node
-            if (cursor.data_type == 'r'){
-                printf("{");
-                mtll_view(*cursor.reference, 1);
-                printf("}");
-            }
-            else if (cursor.data_type == 'i'){
-                int * i = cursor.data;
-                printf("%d", *i);
-            }
-            else if (cursor.data_type == 'f'){
-                float * f = cursor.data;
-                printf("%.02f", *f);
-            }
-            else if (cursor.data_type == 'c'){
-                char * c = cursor.data;
-                printf("%c", *c);
-            }
-            else if (cursor.data_type == 's'){
-                char * s = cursor.data;
-                printf("%s", s);
-            }
-
-            printf(" -> ");
-            cursor = *cursor.next;
+    while(cursor != NULL){
+        if (cursor->data_type == 'i'){
+            printf("%d", cursor->i_value);
         }
-        else{
-            // reference node
-            if (cursor.data_type == 'r'){
-                printf("{");
-                mtll_view(*cursor.reference, 1);
-                printf("}");
-            }
-            else if (cursor.data_type == 'i'){
-                int * i = cursor.data;
-                printf("%d", *i);
-            }
-            else if (cursor.data_type == 'f'){
-                float * f = cursor.data;
-                printf("%.02f", *f);
-            }
-            else if (cursor.data_type == 'c'){
-                char * c = cursor.data;
-                printf("%c", *c);
-            }
-            else if (cursor.data_type == 's'){
-                char * s = cursor.data;
-                printf("%s", s);
-            }
+        else if (cursor->data_type == 'f'){
+            printf("%.02f", cursor->f_value);
+        }
+        else if (cursor->data_type == 'c'){
+            printf("%c", cursor->c_value);
+        }
+        else if (cursor->data_type == 's'){
+            printf("%s", cursor->s_value);
+        }
+        else if (cursor->data_type == 'r'){
+            printf("{");
+            mtll_view(cursor->reference);
+            printf("}");
+        }
 
-            printf("\n");
+        // print arrow if next != NULL
+        if (cursor->next != NULL){
+            printf(" -> ");
+        }
+        cursor = cursor->next;
+    }
+}
+
+void mtll_view_list(node * head){
+    if (head == NULL){
+        return;
+    }
+
+    int nested = 0;
+    node * cursor = head;
+
+    while(cursor != NULL){
+        if (cursor->data_type == 'r'){
+            nested = 1;
             break;
         }
+        cursor = cursor->next;
+    }
+
+    if (nested == 0){
+        printf("List %d\n", head->list_index);
+    }
+    else if (nested == 1){
+        printf("Nested %d\n", head->list_index);
     }
 }
 
 void mtll_type(node * head){
-    node cursor = *head;
+    node * cursor = head;
 
-    while (1){
-        if (cursor.next != NULL){
-            // reference node
-            if (cursor.data_type == 'r'){
-                printf("{reference}");
-            }
-            else if (cursor.data_type == 'i'){
-                printf("int");
-            }
-            else if (cursor.data_type == 'f'){
-                printf("float");
-            }
-            else if (cursor.data_type == 'c'){
-                printf("char");
-            }
-            else if (cursor.data_type == 's'){
-               printf("string");
-            }
-
+    while(cursor != NULL){
+        if (cursor->data_type == 'i'){
+            printf("int");
+        }
+        else if (cursor->data_type == 'f'){
+            printf("float");
+        }
+        else if (cursor->data_type == 'c'){
+            printf("char");
+        }
+        else if (cursor->data_type == 's'){
+            printf("string");
+        }
+        else if (cursor->data_type == 'r'){
+            printf("reference");
+        }
+        
+        // print arrow if next != NULL
+        if (cursor->next != NULL){
             printf(" -> ");
-            cursor = *cursor.next;
         }
-        else{
-            // reference node
-            if (cursor.data_type == 'r'){
-                printf("{reference}");
-            }
-            else if (cursor.data_type == 'i'){
-                printf("int");
-            }
-            else if (cursor.data_type == 'f'){
-                printf("float");
-            }
-            else if (cursor.data_type == 'c'){
-                printf("char");
-            }
-            else if (cursor.data_type == 's'){
-               printf("string");
-            }
-
-            printf("\n");
-            break;
-        }
+        cursor = cursor->next;
     }
 }
 
-node * mtll_insert(node * head, int position, char element[], node * ns, int * is, float * fs, char * cs, char * ss, struct list * lists, int * num_ns, int * num_is, int * num_fs, int * num_cs, int * num_ss){
-    node * bottom = head;
+node * mtll_delete(node * nodes, node * head, int position){
+    node * cursor = head;
 
-    // measuring list size
-    int size = 0;
-    while (bottom->next != NULL){
-        size++;
-        bottom = bottom->next;
-    }
-
-    // determine insert position
-    int rev = 0;
-    if (abs(position) > size){
-        printf("INVALID COMMAND: INSERT\n");
-        return NULL;
-    }
-    else if (position < 0){
-        position = size + position + 1;
-        rev = 1;
-    }
-
-    // find bottom node
-    bottom = head;
-    for (int i = 0; i < position; i++){
-        bottom = bottom->next;
-    }
-
-    // nest list
-    if (element[0] == '{' && element[strlen(element) - 1] == '}'){
-        int list_num;
-        char spare[100];
-        strcpy(spare, element);
-
-        sscanf(spare, "{%d}", &list_num);
-
-        if (list_num > *num_ns || lists[list_num].head == NULL){
-            printf("INVALID COMMAND: NEW\n");
-        }
-                
-        node * i_head = NULL;
-        node * i_tail = NULL;
-
-        // find head and tail
-        if (lists[list_num].head != NULL){
-            i_head = lists[list_num].head;
-
-            node * cursor = i_head;
-            while(1){
-                if (cursor->next == NULL){
-                    i_tail = cursor;
-                    break;
-                }
-                else {
-                    cursor = cursor->next;
-                }
-            }
-        }
-
-        if (position == 0){
-            printf("INVALID COMMAND: INSERT\n");
-            return head;
-        }
-        else if (position != size || (position == size && rev == 0)){
-            node * top = head;
-            for (int i = 1; i < position; i++){
-                top = top->next;
-            }
-            top->next = i_head;
-            i_tail->next = bottom;
-            bottom = i_head;
-        }
-        else if (position == size && rev == 1){
-            bottom->next = i_head;
-        }
-
-        // display list content
-        printf("List %d: ", head->index);
-        mtll_view(head, 0);
-
-        return head;
-    }
-
-    // node insertion
-    node * i_node = &ns[(*num_ns + 1) * sizeof(node)];
-
-    char input[128];
-    strcpy(input, element);
-
-    i_node->data_type = 'c';
-    i_node->data = NULL;
-
-    // special case: empty character
-    if (strlen(input) == 0){
-        i_node->data_type = 'c';
-        char s = '\0';
-        ss[*num_ss*100] = s;
-        *num_ss = *num_ss + 1;
-    }
-
-    // checking input type
-    int data_type = 0; // 0:int 1:float 2:string 3:char 4:powerd int
-    int * dt_ptr = &data_type;
-
-    for (size_t j = 0; j < strlen(input); j++){
-        if (input[j] <= '/' || input[j] >= ':'){
-            // "-" sign
-            if (input[j] == '-' && data_type == 0){
-                *dt_ptr = 0;
-            }
-            // float
-            else if (input[j] == '.' && !(data_type == 2 && data_type == 3)){
-                *dt_ptr = 1;
-            }
-            // char
-            else if (strlen(input) == 1){
-                *dt_ptr = 3;
-            }
-            // "e" sign
-            else if (input[j] == 'e' && data_type == 0){
-                *dt_ptr = 4;
-            }
-            // string
-            else if (strlen(input) > 1){
-                *dt_ptr = 2;
-            }
-        }
-    }
-
-    // checking for NULL inputs
-    if (strcmp(input, "") == 0) {
-        *dt_ptr = 3;
-    }
-
-    // converting powerd int to int
-    int power = 0;
-    if (data_type == 4){
-        char spare[128];
-        strcpy(spare, input);
-
-        int base;
-        int factor;
-
-        sscanf(spare, "%de%d", &base, &factor);
-        
-        double result = pow(base, factor);
-
-        power = (int)result;
-    }
-        
-    // insert data to node
-        // int
-    if (data_type == 0){
-        i_node->data_type = 'i';
-
-        int integer =atoi(input);
-
-        is[*num_is * sizeof(int)] = integer;
-        i_node->data = &is[*num_is * sizeof(int)];
-        *num_is = *num_is + 1;
-    }
-        // powered int
-    else if (data_type == 4){
-        i_node->data_type = 'i';
-
-        is[*num_is * sizeof(int)] = power;
-        i_node->data = &is[*num_is * sizeof(int)];
-        *num_is = *num_is + 1;
-    }
-        // float
-    else if (data_type == 1) {
-        i_node->data_type = 'f';
-
-        float f = atof(input);
-
-        fs[*num_fs * sizeof(float)] = f;
-        i_node->data = &fs[*num_fs * sizeof(float)];
-        *num_fs = *num_fs + 1;
-    }
-        // string
-    else if (data_type == 2) {
-        i_node->data_type = 's';
-
-        for (int i = 0; i <= strlen(input); i++){
-            ss[(*num_ss) * 128 + i] = input[i];
-        }
-
-        i_node->data = &ss[(*num_ss) * 128];
-        *num_ss = *num_ss + 1;
-    }
-        // char
-    else if (data_type == 3) {
-        i_node->data_type = 'c';
-
-        cs[*num_cs * sizeof(char)] = *input;
-        i_node->data = &cs[*num_cs * sizeof(char)];
-        *num_cs = *num_cs + 1;
-    }
-    else {
-        printf("Interesting, this shouldn't be happening\n");
-    }
-
-    // insert new element to list
-    *num_ns = *num_ns + 1;
-
-    // insertion for empty lists
-    if (bottom->data_type == 'e'){
-        printf("List %d: ", head->index);
-        mtll_view(i_node, 0);
-        return i_node;
-    }
-
-    if (position == 0){
-        i_node->next = bottom;
-        head = i_node;
-    }
-    else if (position != size || (position == size && rev == 0)){
-        node * top = head;
-        for (int i = 1; i < position; i++){
-            top = top->next;
-        }
-        top->next = i_node;
-        i_node->next = bottom;
-        bottom = i_node;
-    }
-    else if (position == size && rev == 1){
-        bottom->next = i_node;
-    }
-
-    // display list content
-    printf("List %d: ", head->index);
-    mtll_view(head, 0);
-
-    return head;
-}
-
-node * mtll_delete(node * head, int position, int index, node * ns, int * num_ns){
+    node * top = NULL;
     node * target = head;
 
-    // checking empty lists
-    if (head->data_type == 'n'){
-        printf("INVALID COMMAND: DELETE\n");
+    // get list size
+    int list_size = 0;
+    while(cursor != NULL){
+        list_size++;
+        cursor = cursor->next;
+    }
+    cursor = head;
+
+    // check size value
+    if (position < 0){
+        position = list_size + position;
+    }
+
+    // position out of bounds
+    if ((position < 0) || (position > list_size)){
         return NULL;
     }
 
-    // measuring list size
-    int size = 0;
-    while (target->next != NULL){
-        size++;
-        target = target->next;
-    }
-
-    // determine insert position
-    if (abs(position) > size){
-        printf("INVALID COMMAND: DELETE\n");
-        return NULL;
-    }
-    else if (position < 0){
-        position = size + position + 1;
-    }
-
-    // find target node
-    target = head;
-    for (int i = 0; i < position; i++){
-        target = target->next;
-    }
-
-    // skipping target node
-    if (position == 0){
-        if (target->next == NULL){
-            node * empty = &ns[(*num_ns + 1) * sizeof(node)];
-            empty->index = index;
-            empty->data_type = 'e'; 
-            empty->data = NULL;
-            empty->next = NULL;
-            if (size == 45){
-            printf("INVALID COMMAND: NEW\n");
-            empty->data_type = 'n';
-            }
-            *num_ns = *num_ns + 1;
-            head = empty;
-        }
-        else{
-            head = target->next;
-        }
-    }
+    // locate delete position
     else{
-        node * top = head;
-        for (int i = 1; i < position; i++){
-            top = top->next;
-        }
-
-        if (position == size){
-            top->next = NULL;
-        }
-        else if (position != size){
-            top->next = target->next;
+        for (int i = 0; i <= position; i++){
+            if (i == position - 1){
+                top = cursor;
+            }
+            if (i == position){
+                target = cursor;
+            }
+            cursor = cursor->next;
         }
     }
 
-    // display list content
-    printf("List %d: ", head->index + 1);
-    mtll_view(head, 0);
+    // deletion
+    node * return_node = head;
+    if (position == 0){
+        return_node = target->next;
+    }
+    else {
+        top->next = target->next;
+    }
+    
+    // print list
+    printf("List %d: ", head->list_index);
+    
+    mtll_view(return_node);
+    printf("\n");
 
-    return head;
+    return return_node;
+}
+
+node * mtll_insert(node * nodes, list * lists, node * head, int position, int * num_nodes, char * element){
+    node * cursor = head;
+
+    node * top = NULL;
+    node * bottom = head;
+
+    // get list size
+    int list_size = 0;
+    while(cursor != NULL){
+        list_size++;
+        cursor = cursor->next;
+    }
+    cursor = head;
+
+    // check size value
+    int rev = 0;
+    if (position < 0){
+        rev = 1;
+        position = list_size + position;
+        if (position == 0){
+            rev = 0;
+            position = 1;
+        }
+    }
+
+    // position out of bounds
+    if ((position < 0) || (position > list_size)){
+        return NULL;
+    }
+
+    // locate insert position
+    else{
+        for (int i = 0; i <= position; i++){
+            if (rev == 0 && i == position - 1){
+                top = cursor;
+            }
+            if (i == position){
+                bottom = cursor;
+            }
+            cursor = cursor->next;
+        }
+    }
+
+    // copy input from element
+    char input[128];
+    strcpy(input, element);
+    // remove new line character
+    input[strlen(input)] ='\0';
+
+    // node creation
+    node * new_node = &nodes[*num_nodes * sizeof(node)];
+    new_node->list_index = head->list_index;
+
+    // nested list
+    if (input[0] == '{' && input[strlen(input) - 1] == '}'){
+        // get list index from input
+        int target_index;
+
+        char copy[128];
+        strcpy(copy, input);
+
+        sscanf(copy, "{%d}", &target_index);
+
+        // reference list in node
+        new_node->data_type = 'r';
+        new_node->reference = lists[target_index * sizeof(node)].head;
+    }
+    // simple list
+    else{
+        // check data type
+        int data_type = 0; // 0:int 1:power 2:float 3:char 4:string
+        int * dt_ptr = &data_type;
+
+        // speical case: empty input
+        if(strlen(input) == 0){
+            *dt_ptr = 3;
+        }
+        // non-empty input
+        else{
+            for(int j = 0; j < strlen(input); j++){
+                // if input[j] is not a number
+                if (input[j] < '0' || input[j] > '9'){
+                    // if input only has one char
+                    if (strlen(input) == 1){
+                        *dt_ptr = 3;
+                    }
+                    // if input[j] is a minus sign
+                    else if (input[j] == '-' && (data_type == 0 || data_type == 1)){
+                        continue;
+                    }
+                    // if input[j] is a power sign
+                    else if (input[j] == 'e' && data_type == 0){
+                        *dt_ptr = 1;
+                    }
+                    // if input[j] is a dot
+                    else if (input[j] == '.' && data_type == 0){
+                        *dt_ptr = 2;
+                    }
+                    // else ipnut is a string
+                    else {
+                        *dt_ptr = 4;
+                    }
+                }
+            }
+        }
+
+        // insert data to node
+            // int
+        if (data_type == 0){
+            new_node->i_value = atoi(input);
+            new_node->data_type = 'i';
+        }
+            // power
+        else if (data_type == 1){
+            int base;
+            int expo;
+            sscanf(input, "%de%d", &base, &expo);
+
+            new_node->i_value = my_pow(base, expo);
+            new_node->data_type = 'i';
+        }
+            // float
+        else if (data_type == 2){
+            new_node->f_value = atof(input);
+            new_node->data_type = 'f';
+        }
+            // char
+        else if (data_type == 3){
+            new_node->c_value = input[0];
+            new_node->data_type = 'c';   
+        }
+            // string
+        else if (data_type == 4){
+            strcpy(new_node->s_value, input);
+            new_node->data_type = 's'; 
+        }
+    }
+
+    // insertion
+    *num_nodes = *num_nodes + 1;
+    node * return_node = head;
+    if (position == 0){
+        new_node->next = bottom;
+        return_node = new_node;
+    }
+    else if (rev == 0){
+        top->next = new_node;
+        new_node->next = bottom;
+    }
+    else if (rev == 1){
+        new_node->next = bottom->next;
+        bottom->next = new_node;
+    }
+    
+    // print list
+    printf("List %d: ", head->list_index);
+    
+    mtll_view(return_node);
+    printf("\n");
+
+    return return_node;
 }

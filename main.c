@@ -4,192 +4,161 @@
 #include<string.h>
 
 int main(void) {
-    // recieving command from stdin
-    char buffer[256];
+    // allocate to store nodes
+    node * nodes = (node*)calloc(128 * 128, sizeof(node));
+    int * num_nodes = (int*)malloc(sizeof(int));
+    *num_nodes = 0;
 
-    // a variable to keep track of number of lists
-    int index_of_lists = 0;
-    int num_of_lists = 0;
+    // allocate to store lists
+    list * lists = (list*)calloc(128, sizeof(node));
 
-    // stroing all heads in here
-    struct list * lists = (struct list *)malloc(100 * sizeof(node));
+    int * num_list = (int*)malloc(sizeof(int));
+    *num_list = 0;
 
-    // allocate memory to store nodes
-    node * ns = (node *)malloc(100 * sizeof(node));
-    int num_n = 0;
-    int * num_ns = &num_n;
+    int * num_active_lists = (int*)malloc(sizeof(int));
+    *num_active_lists = 0;
 
-    // allocate memory to store data
-    int * is = (int *)malloc(100 * sizeof(int));
-    int num_i = 0;
-    int * num_is = &num_i;
-
-    float * fs = (float *)malloc(100 * sizeof(float));
-    int num_f = 0;
-    int * num_fs = &num_f;
-
-    char * cs = (char *)malloc(100 * sizeof(char));
-    int num_c = 0;
-    int * num_cs = &num_c;
-
-    char * ss = malloc(100 * 128);
-    int num_s = 0;
-    int * num_ss = &num_s;
-    
-    while(fgets(buffer, sizeof(buffer), stdin) != NULL){
-        char prem_cmd[100];
-        char deux_cmd[100];
-        char * cmds[] = {prem_cmd, deux_cmd};
-
-        if (strlen(buffer) != 1){
-            // format command through sscanf
-            sscanf(buffer, "%s %s", cmds[0], cmds[1]);
-
-            // convert second command into integer if aplicable
-            int numeric = 1;
-            // checking non_numeric char in deux_cmd
-            for (size_t i = 0; i < strlen(deux_cmd); i++){
-                if (deux_cmd[i] < 48 || deux_cmd[i] > 57){
-                    numeric = 0;
-                    break;
-                }
-            }
-            if (numeric == 1) {
-                *cmds[1] = atoi(cmds[1]);
-            }
-
-            // checking different first command inputs
-                // NEW
-            if (strcmp(cmds[0], "NEW") == 0){
-                if (numeric == 1){
-                    lists[index_of_lists].head = mtll_create(*deux_cmd, index_of_lists, ns, is, fs, cs, ss, lists, num_ns, num_is, num_fs, num_cs, num_ss);
-                    if (lists[index_of_lists].head->data_type != 'n'){
-                        num_of_lists++;
-                        index_of_lists++;
-                    }
-                }
-                else {
-                    printf("INVALID COMMAND: NEW\n");
-                }
-                continue;
-            }
-
-                // VIEW
-            else if (strcmp(cmds[0], "VIEW") == 0){
-                if (numeric){
-                    if (lists[*deux_cmd - 0].head != NULL){
-                        mtll_view(lists[*deux_cmd - 0].head, 0);
-                    }
-                    else{
-                        printf("INVALID COMMAND: VIEW\n");
-                    }
-                    continue;
-                }
-                else if (strcmp(cmds[1], "ALL") == 0){
-                    printf("Number of lists: %d\n", num_of_lists);
-                    for(int i = 0; i < index_of_lists; i++){
-                        if (lists[i].head != NULL){
-                            printf("List %d\n", lists[i].head->index);
-                        }
-                    }
-                    continue;
-                }
-                else{
-                    printf("INVALID COMMAND: INPUT\n");
-                    continue;
-                }
-            }
-
-                // VIEW_NESTED
-            else if (strcmp(cmds[0], "VIEW_NESTED") == 0){
-                if (numeric){
-                    if (lists[*deux_cmd - 0].head != NULL){
-                        mtll_view_nested(lists[*deux_cmd - 0].head);
-                    }
-                    else{
-                        printf("INVALID COMMAND: VIEW\n");
-                    }
-                }
-                else{
-                    printf("INVALID COMMAND: INPUT\n");
-                }
-                continue;
-            }
-
-                // TYPE
-            else if (strcmp(cmds[0], "TYPE") == 0){
-                mtll_type(lists[*deux_cmd - 0].head);
-                continue;
-            }
-
-                // REMOVE (set head as "NULL")
-            else if (strcmp(cmds[0], "REMOVE") == 0){
-                lists[*deux_cmd - 0].head = NULL;
-                num_of_lists--;
-
-                printf("List %d has been removed.\n\n", *deux_cmd);
-
-                printf("Number of lists: %d\n", num_of_lists);
-                for(int i = 0; i < index_of_lists; i++){
-                    if (lists[i].head != NULL){
-                        printf("List %d\n", lists[i].head->index);
-                    }
-                }
-                continue;
-            }
-
-            // part 2 commands
-                // INSERT
-            else if (strcmp(cmds[0], "INSERT") == 0){
-                int target = *(int *)cmds[1];
-                int position;
-                char element[100];
-
-                int * t_ptr = &target;
-                int * p_ptr = &position;
-                char * e_ptr = &element[0];
-
-                sscanf(buffer, "%s %d %d %s", cmds[0], t_ptr, p_ptr, e_ptr);
-
-                node * insertion = mtll_insert(lists[target].head, position, element, ns, is, fs, cs, ss, lists, num_ns, num_is, num_fs, num_cs, num_ss);
-
-                if (insertion != NULL){
-                    lists[*deux_cmd - 0].head = insertion;
-                }
-
-                continue;
-            }
-
-                // DELETE
-            else if (strcmp(cmds[0], "DELETE") == 0){
-                int target = *(int *)cmds[1];
-                int position;
-
-                int * t_ptr = &target;
-                int * p_ptr = &position;
-
-                sscanf(buffer, "%s %d %d", cmds[0], t_ptr, p_ptr);
-
-                node * deletion = mtll_delete(lists[target - 1].head, position, lists[target - 1].head->index, ns, num_ns);
-
-                if (deletion != NULL){
-                    (lists[*deux_cmd - 0]).head = deletion;
-                }
-
-                continue;
-            }
-
-            else{
-                printf("%s, %s\n", cmds[0], cmds[1]);
-                printf("INVALID COMMAND: INPUT\n");
-                continue;
-            }
-        }
-        
-        break;
+    if (nodes == NULL || num_nodes == NULL || lists == NULL || num_list == NULL || num_active_lists == NULL){
+        printf("MEMORY ALLOCATION FAILED\n");
+        return -1;
     }
 
-    mtll_free(is, fs, cs, ss, ns, lists);
+    char buffer[128];
+
+    // terminates if empty input
+    while (fgets(buffer, sizeof(buffer), stdin) != NULL && strlen(buffer) != 1){
+        // copy buffer to copy
+        char copy[128];
+        strcpy(copy, buffer);
+
+        char cmd0[128];
+        char cmd1[128];
+        char * cmds[] = {cmd0, cmd1};
+
+        sscanf(copy, "%s %s", cmds[0], cmds[1]);
+
+        // check if second command is a number
+        int is_num = 1;
+        int * in_ptr = &is_num;
+        for(int j = 0; j < strlen(cmd1); j++){
+            // if input[j] is not a number
+            if (cmd1[j] < '0' || cmd1[j] > '9'){
+                *in_ptr = 0;
+                break;
+            }
+        }
+
+        // NEW
+        if (strcmp(cmd0, "NEW") == 0){
+            if (is_num == 1){
+                // function returns a head
+                node * new_head = mtll_create(atoi(cmd1), nodes, lists, num_nodes, num_list);
+
+                // store head
+                if (new_head != NULL){
+                    lists[*num_list * sizeof(node)].head = new_head;
+                    *num_list = *num_list + 1;
+                    *num_active_lists = *num_active_lists + 1;
+                }
+                else{
+                    printf("INVALID COMMAND: NEW\n");
+                }
+            }
+            else {
+                printf("INVALID COMMAND: NEW \n");
+            }
+        }
+        // VIEW & VIEW ALL
+        else if (strcmp(cmd0, "VIEW") == 0){
+            if (is_num == 1){
+                mtll_view(lists[atoi(cmd1) * sizeof(node)].head);
+                printf("\n");
+            }
+            else if (strcmp(cmd1, "ALL") == 0){
+                printf("Number of lists: %d\n", *num_active_lists);
+                for(int i = 0; i < *num_list; i++){
+                    mtll_view_list(lists[i * sizeof(node)].head);
+                }
+            }
+            else {
+                printf("INVALID COMMAND: VIEW \n");
+            }
+        }
+        // VIEW-NESTED
+        else if (strcmp(cmd0, "VIEW-NESTED") == 0){
+            if (is_num == 1){
+                mtll_view_nested(lists[atoi(cmd1) * sizeof(node)].head);
+                printf("\n");
+            }
+            else {
+                printf("INVALID COMMAND: VIEW-NESTED \n");
+            }
+        }
+        // TYPE
+        else if (strcmp(cmd0, "TYPE") == 0){
+            if (is_num == 1){
+                mtll_type(lists[atoi(cmd1) * sizeof(node)].head);
+                printf("\n");
+            }
+            else {
+                printf("INVALID COMMAND: VIEW-NESTED \n");
+            }
+        }
+        // REMOVE
+        else if (strcmp(cmd0, "REMOVE") == 0){
+            if (lists[atoi(cmd1) * sizeof(node)].head != NULL){
+                lists[atoi(cmd1) * sizeof(node)].head = NULL;
+                *num_active_lists = *num_active_lists - 1;
+            }
+
+            printf("List %d has been removed.\n\n", atoi(cmd1));
+
+            printf("Number of lists: %d\n", *num_active_lists);
+            for(int i = 0; i < *num_list; i++){
+                mtll_view_list(lists[i * sizeof(node)].head);
+            }
+        }
+        // INSERT
+        else if (strcmp(cmd0, "INSERT") == 0){
+            strcpy(copy, buffer);
+
+            int position;
+            char insert_element[128];
+            char * ie_ptr = &insert_element[0];
+
+            sscanf(copy, "%s %s %d %s", cmds[0], cmds[1], &position, ie_ptr);
+
+            node * new_head = mtll_insert(nodes, lists, lists[atoi(cmd1) * sizeof(node)].head, position, num_nodes, insert_element);
+            if (new_head != NULL){
+                lists[atoi(cmd1) * sizeof(node)].head = new_head;
+            }
+            else{
+                printf("INVALID COMMAND: INSERT\n");
+            }
+        }
+        // DELETE
+        else if (strcmp(cmd0, "DELETE") == 0){
+            strcpy(copy, buffer);
+
+            int position;
+
+            sscanf(copy, "%s %s %d", cmds[0], cmds[1], &position);
+
+            node * new_head = mtll_delete(nodes, lists[atoi(cmd1) * sizeof(node)].head, position);
+            if (new_head != NULL){
+                lists[atoi(cmd1) * sizeof(node)].head = new_head;
+            }
+            else{
+                printf("INVALID COMMAND: INSERT\n");
+            }
+        }
+    }
+
+    free(nodes);
+    free(num_list);
+    free(num_active_lists);
+    free(num_nodes);
+    free(lists);
 
     return 0;
 }
